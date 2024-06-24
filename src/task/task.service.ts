@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { TaskDto } from './task.dto';
+import { TaskDto, findAllParameters } from './task.dto';
 
 @Injectable()
 export class TaskService {
@@ -8,11 +8,30 @@ export class TaskService {
 
     create(task: TaskDto){
         this.tasks.push(task)
-        return task
+       
+        return {
+            message:`Task created successfully!`, 
+            code: HttpStatus.OK, 
+            data: task
+        }
+        
+
     }
 
-    findAll(){
-        return this.tasks
+    findAll(params: findAllParameters) : TaskDto[]{
+        return this.tasks.filter(t=>{
+            let match = true
+
+            if(params.title !=undefined && !t.title.includes(params.title)){
+                match = false
+            }
+
+            if(params.status != undefined && !t.status.includes(params.status)){
+                match = false
+            }
+
+            return match
+        })
     }
 
     findById(id:string): TaskDto{
@@ -33,6 +52,18 @@ export class TaskService {
             return task
         }
 
-        throw new HttpException(`Task with id ${id} not found`, HttpStatus.UNPROCESSABLE_ENTITY)
+        throw new HttpException(`Task with id ${id} not found!`, HttpStatus.UNPROCESSABLE_ENTITY)
+    }
+
+    remove(id: string){
+        let taskIndex = this.tasks.findIndex(task => task.id === id)
+
+        if(taskIndex >= 0){
+            this.tasks.splice(taskIndex, 1)
+
+            throw new HttpException(`Task with id ${id} deleted successfully!`,HttpStatus.OK)
+        }
+
+        throw new HttpException(`Task with id ${id} not found!`, HttpStatus.UNPROCESSABLE_ENTITY)
     }
 }
