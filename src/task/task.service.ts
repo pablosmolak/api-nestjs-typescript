@@ -1,25 +1,40 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { TaskDto, findAllParameters } from './task.dto';
+import { TaskDto, findAllParameters, taskStatusEnum } from './task.dto';
+import { v4 as uuid } from 'uuid'
+import { PrismaService } from 'src/auth/prisma/prisma.service';
 
 @Injectable()
 export class TaskService {
 
-    private tasks: TaskDto[] = []
+    constructor(private readonly prisma: PrismaService) { }
 
-    create(task: TaskDto){
-        this.tasks.push(task)
+   private tasks: TaskDto[] = []
+
+    async create(task: TaskDto){
+
+        task.status = taskStatusEnum.TO_DO
+        task.expirationDate = new Date(task.expirationDate)
+        
+        const newTask: TaskDto = await this.prisma.task.create({
+            data:{
+                ...task
+            }
+        })
        
         return {
             message:`Task created successfully!`, 
             code: HttpStatus.OK, 
-            data: task
+            data: newTask
         }
         
 
     }
 
-    findAll(params: findAllParameters) : TaskDto[]{
-        return this.tasks.filter(t=>{
+    async findAll(params: findAllParameters){
+
+        const tasks: TaskDto[] = await this.prisma.task.findMany()
+
+        /*return this.tasks.filter(t=>{
             let match = true
 
             if(params.title !=undefined && !t.title.includes(params.title)){
@@ -30,8 +45,8 @@ export class TaskService {
                 match = false
             }
 
-            return match
-        })
+        })*/
+        return tasks
     }
 
     findById(id:string): TaskDto{

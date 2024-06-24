@@ -19,7 +19,7 @@ export class UsersService {
 
         this.users.push(user)
 
-        delete user.password
+        //delete user.password
 
         return user
     }
